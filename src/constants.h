@@ -13,7 +13,9 @@
 typedef int second_t;
 typedef int minute_t;
 typedef int hour_t;
+typedef int day_t;
 typedef int year_t;
+
 
 typedef enum DAY{
     SUN = 0,
@@ -40,24 +42,28 @@ typedef enum MONTH{
     DEC = 11
 } MONTH;
 
-typedef struct time_t{
+typedef struct time_struct{
     second_t sec_;
     minute_t min_;
     hour_t hour_;
-}time_t;
+}time_struct;
 
 typedef struct date_t
 {
-    DAY day_;
+    day_t day_;
     MONTH month_;
     year_t year_;
 }date_t;
 
-
 typedef struct event_t{
     const char *title_, *description_;
-    time_t time_t;
+    time_struct time_;
     date_t date;
 }event_t;
+
+typedef struct event_list{
+	event_t *head_ptr_;
+	int size;
+}event_list;
 
 #endif // CONSTANTS_H_

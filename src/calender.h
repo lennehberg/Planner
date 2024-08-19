@@ -9,7 +9,7 @@
 */
 typedef struct calender_t{
 
-    event_t **calender_arr_[NUM_YEARS][NUM_MONTHS];
+    event_list *calender_arr_[NUM_YEARS][NUM_MONTHS];
     date_t *cur_day_;
 
 }calender_t;
@@ -17,19 +17,22 @@ typedef struct calender_t{
 
 // calender interface
 /*
-* @descritption inititates a new calender struct, and returns a pointer to it
+* @description initiates a new calender struct, and returns a pointer to it
 */
 calender_t *init_calender_(date_t *date);
 
 /*
-* @descrption adds a new event to the calendar
+* @description adds a new event to the calendar
 */
 void add_calender_event_(calender_t *calen, event_t *event);
 
 /*
 * @description returns an array of events by a given date
 */
-event_t *get_events_(calender_t *calen, const date_t date);
+event_list *get_events_(calender_t *calen, date_t date);
+
+
+void print_calender_(calender_t *calen);
 
 /*
 * @description frees the resources of calender
