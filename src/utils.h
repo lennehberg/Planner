@@ -7,7 +7,9 @@
 #define DATE_VAR_LEN 8
 #define TIME_VAR_LEN 6
 #define TITLE_LEN 256
-#define DESC_LEN 65536
+#define DESC_LEN 300
+
+#include <time.h>
 
 /**
  * boolean for partability
@@ -17,22 +19,22 @@ typedef char bool_t;
 /**
  * Event Date type - DDMMYYYY format
  */
-typedef const char pdate_t[DATE_VAR_LEN]; 
+typedef time_t pdate_t; 
 
 /**
  * Event Time type - HHMMSS format
  */ 
-typedef const char ptime_t[TIME_VAR_LEN];
+typedef time_t ptime_t;
 
 /**
  * Event Title type - limited to 256 characters
  */ 
-typedef const char ptitle_t[TITLE_LEN];
+typedef char ptitle_t[TITLE_LEN];
 
 /**
- * Event Description type = limited to 65536 characters
+ * Event Description type - limited to 65536 characters
  */ 
-typedef const char pdesc_t[DESC_LEN];
+typedef char pdesc_t[DESC_LEN];
 
 
 /**
@@ -46,3 +48,4 @@ typedef enum {
 } Priorety;
 
 #endif // UTILS_H	
+
