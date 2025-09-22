@@ -22,19 +22,16 @@ int _compare_event_executions(const void *a, const void *b)
  */
 void get_month_time_t(time_t *month_start_t, time_t *month_end_t ,int month, int year)
 {
-
-	if (!month_start_t || !month_end_t)
-	{
-		return;
-	}
-
 	// find the start of the month in time_t
 	struct tm time_spec = {0};
 	time_spec.tm_year = year - EPOCH_YEAR;
 	time_spec.tm_mon = month - 1; // assuming months are labeled Jan = 1,...,Dec = 12	
 	time_spec.tm_mday = 1;
-
-	*month_start_t = mktime(&time_spec);
+	
+	if (month_start_t)
+	{
+		*month_start_t = mktime(&time_spec);
+	}
 
 	// find the end of the month in time_t
 	time_spec = (struct tm){0};
@@ -42,8 +39,10 @@ void get_month_time_t(time_t *month_start_t, time_t *month_end_t ,int month, int
 	time_spec.tm_mon = month; // assuming months are labeled Jan = 1,...,Dec = 12	
 	time_spec.tm_mday = 1; // by calculating the first day of the next month, mktime sets the time to 				// 00:00:00 of that day, in an [inclusive_start, exclusive_end] range 
 			       // should work pretty well
-
-	*month_end_t = mktime(&time_spec);
+	if (month_end_t)
+	{
+		*month_end_t = mktime(&time_spec);
+	}
 }
 
 /**
