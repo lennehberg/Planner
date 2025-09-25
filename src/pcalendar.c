@@ -101,3 +101,14 @@ size_t filter_events_month_year(PlannerEvent* events, PlannerEvent** ret_ptr, in
 
 	return filtered_amount;
 }
+
+
+int get_first_wday_month(int month, int year)
+{
+	time_t month_start_t = 0;
+	get_month_time_t(&month_start_t, NULL, month, year);
+
+	// convert to tm struct to extract the first week day
+	struct tm *month_start_st = localtime(&month_start_t);
+	return month_start_st->tm_wday;
+}

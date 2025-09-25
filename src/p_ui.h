@@ -2,6 +2,7 @@
 #define _P_UI_H
 
 #include <ncurses.h>
+#include "pevent.h"
 
 typedef struct {
 	
@@ -23,6 +24,8 @@ typedef struct {
 	int cursor_row;
 	int cursor_col;
 
+	int cursor_cur_nday;
+
 } MonthGridWin;
 
 typedef struct {
@@ -33,6 +36,8 @@ typedef struct {
 	int day_win_width; // width of day task window
 	int r_task_list_starty; // relative (to day window) list starty
 	int r_task_list_startx; // relative list startx
+				
+	int list_len; 
 
 } DayTaskWin;
 
@@ -47,9 +52,14 @@ int p_init_ui(PlannerUI *p_ui);
 
 void populate_month_grid(MonthGridWin *month_win);
 
+void populate_day_task(DayTaskWin *day_win, int dday, int dmonth, int dyear,
+		PlannerEvent *day_events, int event_count);
+
 void init_cursor(MonthGridWin *month_win, int row, int col);
 
 void update_cursor(MonthGridWin *month_win, int row, int col);
+
+void move_cursor(MonthGridWin *month_win, int ch);
 
 void destroy_p_ui(PlannerUI *p_ui);
 

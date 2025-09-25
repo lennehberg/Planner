@@ -63,7 +63,8 @@ int p_init_ui(PlannerUI *p_ui)
 		day_win_height,
 		day_win_width,
 		day_win_height / 5,
-		1
+		1,
+		10
 	};
 
 	MonthGridWin _month_win = {
@@ -124,6 +125,22 @@ int grid_coords(MonthGridWin *month_win, int row, int col, int *y, int *x)
 	return 1;
 }
 
+
+int list_y(DayTaskWin *day_win, int row, int *y)
+{
+	int height = day_win->day_win_height - day_win->r_task_list_starty;
+	int starty = day_win->r_task_list_starty;
+	int list_rows = day_win->list_len;
+
+	if (row < 0 || row > list_rows)
+	{
+		return 0;
+	}
+
+	*y = starty + (row * height) / list_rows + 1;
+
+	return 1;
+}
 
 // --- DRAWING FUNCTIONS --- //
 
@@ -228,6 +245,7 @@ WINDOW *init_month_grid(int height, int width, int starty, int startx)
     	return month_grid;
 }
 
+
 // populate
 void populate_month_grid(MonthGridWin *month_win)
 {
@@ -241,22 +259,16 @@ void populate_month_grid(MonthGridWin *month_win)
 	int month = month_win->month;
 	int year = month_win->year;
 
-	// get the start and end of the month
-	time_t month_start_t = 0, month_end_t = 0;
-	get_month_time_t(&month_start_t, &month_end_t, month, year);
-
 	// find the length of the month in days
 	int days_in_month = get_month_len_days(month, year);
-
-	// convert to time struct to extract which day is the first day of the month
-	struct tm *month_start_st = localtime(&month_start_t);
-	int wday = month_start_st->tm_wday;
+	
+	// get the first week day of the month
+	int wday = get_first_wday_month(month, year);
 	int day_num = 1;
 	int available_height = height;
 
 	for (int row = 0; row < grid_rows && day_num <= days_in_month; row++)
 	{
-		// int y = starty + (row * available_height) / grid_rows + 1; // Top left in cell
 		int y, x; 
 		for (int col = 0; col < grid_cols && day_num <= days_in_month; col++)
 		{
@@ -267,7 +279,6 @@ void populate_month_grid(MonthGridWin *month_win)
             			continue;
         		}
 
-		// int x = startx + (col * (width - startx)) / grid_cols + 1; // Top left in cell
 		mvwprintw(grid, y, x, "%d", day_num);
 		day_num++;
     		}
@@ -284,10 +295,7 @@ void redraw_cell(MonthGridWin *month_win, int row, int col, bool highlight)
 	int year = month_win->year;
 
 	// find the first day of the week
-	time_t month_start_t = 0;
-	get_month_time_t(&month_start_t, NULL, month, year);
-	struct tm *month_start_st = localtime(&month_start_t);
-	int first_wday = month_start_st->tm_wday;
+	int first_wday = get_first_wday_month(month, year);
 
 	// calculate the day number of the cell
 	int day_num = (row * 7 + col) - first_wday + 1;
@@ -300,11 +308,6 @@ void redraw_cell(MonthGridWin *month_win, int row, int col, bool highlight)
 	}
 
 	// find the y x coordinates of the cell
-	// int y = month_win->r_grid_starty + 
-	//	(row *(month_win->grid_height)) / month_win->grid_rows + 1;
-	// int x = month_win->r_grid_startx + 
-	//	(col * (month_win->grid_width - month_win->r_grid_startx)) / month_win->grid_cols + 1;
-	
 	int y, x;
 	grid_coords(month_win, row, col, &y, &x);
 
@@ -324,8 +327,11 @@ void redraw_cell(MonthGridWin *month_win, int row, int col, bool highlight)
 
 void init_cursor(MonthGridWin *month_win, int row, int col)
 {
+	int first_wday = get_first_wday_month(month_win->month, month_win->year);
 	month_win->cursor_row = row;
 	month_win->cursor_col = col;
+
+	month_win->cursor_cur_nday = (row * 7 + col) - first_wday + 1;
 
 	redraw_cell(month_win, row, col, true);
 
@@ -335,13 +341,18 @@ void init_cursor(MonthGridWin *month_win, int row, int col)
 
 void update_cursor(MonthGridWin *month_win, int row, int col)
 {
-	redraw_cell(month_win, month_win->cursor_row, month_win->cursor_col, false);
+	int first_wday = get_first_wday_month(month_win->month, month_win->year);
+	int cur_day = (row * 7 + col) - first_wday + 1;
+	if (cur_day > 0 && cur_day < get_month_len_days(month_win->month, month_win->year) + 1)
+	{
+		redraw_cell(month_win, month_win->cursor_row, month_win->cursor_col, false);
+	
+		month_win->cursor_row = row;
+		month_win->cursor_col = col;
+		month_win->cursor_cur_nday = cur_day;
 
-	month_win->cursor_row = row;
-	month_win->cursor_col = col;
-
-	redraw_cell(month_win, month_win->cursor_row, month_win->cursor_col, true);
-
+		redraw_cell(month_win, month_win->cursor_row, month_win->cursor_col, true);
+	}
 	wrefresh(month_win->_month_grid);
 }
 
@@ -389,6 +400,33 @@ void move_cursor(MonthGridWin *month_win, int ch)
 			}
 			break;
 	}	
+}
+
+
+void populate_day_task(DayTaskWin *day_win, int dday, int dmonth, int dyear,
+		PlannerEvent *day_events, int event_count)
+{
+	// print the title of the event at each list block
+	PlannerEvent *cur_event = day_events;
+	WINDOW *day_task = day_win->_day_task;
+	int list_rows = day_win->list_len;
+	int y = 3;
+	int x = 3;
+
+	int max_ddate_width = 2 + 1 + 3 + 1 + 4; // in dd/mmm/yyyy representation
+	// clear header before displaying date
+	mvwhline(day_task, y, x, ' ', max_ddate_width);
+	mvwprintw(day_task, y, x, "%d/%d/%d", dday, dmonth, dyear);
+
+	for (int row = 0; row < list_rows && row < event_count; row++)
+	{
+		// TODO check for errors
+		list_y(day_win, row, &y);
+		mvwprintw(day_task, y, x, "%s" ,cur_event->title);
+		cur_event++;
+	}
+
+	wrefresh(day_task);
 }
 
 
