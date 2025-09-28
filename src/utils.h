@@ -10,6 +10,7 @@
 #define DESC_LEN 300
 
 #include <time.h>
+#include <stdbool.h>
 
 /**
  * boolean for partability
@@ -46,6 +47,10 @@ typedef enum {
 	PRIORETY_MED,
 	PRIORETY_HIGH
 } Priorety;
+
+
+void *find_lower_bound(const void *key, const void *base, size_t num, size_t size, 
+			int (*compare)(const void *, const void *));
 
 #endif // UTILS_H	
 

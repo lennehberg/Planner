@@ -45,6 +45,32 @@ void get_month_time_t(time_t *month_start_t, time_t *month_end_t ,int month, int
 	}
 }
 
+
+void get_day_time_t(time_t *day_start_t, time_t *day_end_t, int day, int month, int year)
+{
+	// find the time_t of the start of the day
+	struct tm time_spec = {0};
+	time_spec.tm_year = year - EPOCH_YEAR;
+	time_spec.tm_mon = month - 1; // assuming Jan = 1,...,Dec = 12
+	time_spec.tm_mday = day;
+
+	if (day_start_t)
+	{
+		*day_start_t = mktime(&time_spec);
+	}
+
+	// find the time_t of the end of the day (00:00:00 of the next day)
+	time_spec = (struct tm){0};
+	time_spec.tm_year = year - EPOCH_YEAR;
+	time_spec.tm_mon = month - 1;
+	time_spec.tm_mday = day + 1;
+
+	if (day_end_t)
+	{
+		*day_end_t = mktime(&time_spec);
+	}
+}
+
 /**
  * Get the length of the month in days
  */
@@ -65,7 +91,6 @@ int get_month_len_days(int month, int year)
 size_t filter_events_month_year(PlannerEvent* events, PlannerEvent** ret_ptr, int event_count,
 					int month, int year)
 {
-	PlannerEvent *filtered_events;
 	size_t filtered_amount = 0;
 
 	// get the first day and last day of the month
@@ -98,6 +123,44 @@ size_t filter_events_month_year(PlannerEvent* events, PlannerEvent** ret_ptr, in
 		filtered_amount = last_event - first_event;
 	}
 
+
+	return filtered_amount;
+}
+
+
+size_t filter_events_day_month_year(PlannerEvent *events, PlannerEvent **ret_ptr, int event_count,
+					int day, int month, int year)
+{
+	size_t filtered_amount = 0;
+
+	// get the beginning and end of the day
+	time_t day_start_t = 0, day_end_t = 0;
+	get_day_time_t(&day_start_t, &day_end_t, day, month, year);
+
+	// use lower bound binary search to find the first event of the day
+	PlannerEvent key_event;
+	key_event.execution_time = day_start_t;
+
+	PlannerEvent *first_event = (PlannerEvent *)find_lower_bound(&key_event,
+									events,
+									event_count,
+									sizeof(PlannerEvent),
+									_compare_event_executions);
+
+	key_event.execution_time = day_end_t;
+
+	PlannerEvent *last_event = (PlannerEvent *)find_lower_bound(&key_event,
+									events,
+									event_count,
+									sizeof(PlannerEvent),
+									_compare_event_executions);
+
+	// check the first event of the day was found and is valid
+	if (first_event < events + event_count)
+	{
+		*ret_ptr = first_event;
+		filtered_amount = last_event - first_event;
+	}
 
 	return filtered_amount;
 }
