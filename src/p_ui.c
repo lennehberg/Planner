@@ -80,7 +80,7 @@ int p_init_ui(PlannerUI *p_ui)
 		1,
 
 		5, 7,
-		0, 0
+		0, 0, 0, 0, 0, 0
 	};
 
 	p_ui->_day_win = _day_win;
@@ -246,6 +246,14 @@ WINDOW *init_month_grid(int height, int width, int starty, int startx)
 }
 
 
+void set_cur_date(MonthGridWin *month_win, int day, int month, int year)
+{
+	month_win->cur_day = day;
+	month_win->cur_month = month;
+	month_win->cur_year = year;
+}
+
+
 // populate
 void populate_month_grid(MonthGridWin *month_win)
 {
@@ -285,6 +293,59 @@ void populate_month_grid(MonthGridWin *month_win)
 	}
 
 	wrefresh(grid);
+}
+
+
+void clear_month_grid_numbers(MonthGridWin *month_win)
+{
+	WINDOW *grid = month_win->_month_grid;
+	int y, x;
+
+	// loop through every row and column of the grid
+	for (int  row = 0; row < month_win->grid_rows; row++)
+	{
+		for (int col = 0; col < month_win->grid_cols; col++)
+		{
+			// get screen coordinates for the current cell
+			if (grid_coords(month_win, row, col, &y, &x))
+			{
+				// overwrite number with spaces
+				mvwprintw(grid, y, x, "  ");
+			}
+
+		}
+	}
+
+	wrefresh(grid);
+}
+
+
+void jump_to_today(MonthGridWin *month_win)
+{
+	// get the current time
+	time_t now = time(NULL);
+	struct tm *local_time = localtime(&now);
+
+	// extract today's date
+	month_win->cur_day = local_time->tm_mday;
+	month_win->cur_month = local_time->tm_mon + 1;
+	month_win->cur_year = local_time->tm_year + 1900;
+
+	// move calendar to today's date
+	month_win->month = month_win->cur_month;
+	month_win->year = month_win->cur_year;
+	
+	// clear and populate the month grid with today's date
+	clear_month_grid_numbers(month_win);
+	populate_month_grid(month_win);
+
+	int first_wday = get_first_wday_month(month_win->month, month_win->year);
+	int cell_index = (month_win->cur_day + first_wday - 1);
+	int row = cell_index / 7;
+	int col = cell_index % 7;
+
+	// move cursor and update ui
+	update_cursor(month_win, row, col);
 }
 
 
@@ -417,13 +478,21 @@ void populate_day_task(DayTaskWin *day_win, int dday, int dmonth, int dyear,
 	// clear header before displaying date
 	mvwhline(day_task, y, x, ' ', max_ddate_width);
 	mvwprintw(day_task, y, x, "%d/%d/%d", dday, dmonth, dyear);
-
-	for (int row = 0; row < list_rows && row < event_count; row++)
+	
+	// display list of events
+	for (int row = 0; row < list_rows; row++)
 	{
-		// TODO check for errors
 		list_y(day_win, row, &y);
-		mvwprintw(day_task, y, x, "%s" ,cur_event->title);
-		cur_event++;
+		// Move cursor to the start of the line to be written or cleared	
+		mvwhline(day_task, y, x, ' ', day_win->day_win_width - x - 1);// Clear the rest of 
+									      // the line
+
+		if (row < event_count)
+		{
+			// If there is an event for this row, print it
+			mvwprintw(day_task, y, x, "%s" ,cur_event->title);
+			cur_event++;
+		}
 	}
 
 	wrefresh(day_task);

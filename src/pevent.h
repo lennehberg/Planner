@@ -22,5 +22,11 @@ typedef struct {
 
 } PlannerEvent;
 
+bool_t initPlannerEvent(PlannerEvent *event, ptitle_t title, pdesc_t desc, 
+			bool_t has_deadline, Priorety event_prio);
+
+
+
+int _compare_event_executions(const void *a, const void *b);
 
 #endif // PEVENT_H	

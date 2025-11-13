@@ -227,7 +227,7 @@ int test_ui_populate_w_cursor()
 	{
 		move_cursor(&month_win, ch);
 		populate_day_task(&day_win, month_win.cursor_cur_nday, month_win.month, month_win.year, 
-				events, list_len);
+				NULL, 0);
 		ch = getch();
 	}
 	

@@ -3,17 +3,6 @@
 #include "pevent.h"
 #include <string.h>
 
-int _compare_event_executions(const void *a, const void *b)
-{
-	time_t time_a = ((const PlannerEvent *)a)->execution_time;
-	time_t time_b = ((const PlannerEvent *)b)->execution_time;
-
-	if (time_a < time_b) return -1;
-	if (time_a > time_b) return 1;
-
-	return 0;
-}
-
 
 void sorted_insert(PlannerEvent *head, PlannerEvent *event, size_t count, size_t memb_size)
 {
@@ -40,19 +29,25 @@ void sorted_insert(PlannerEvent *head, PlannerEvent *event, size_t count, size_t
 }
 
 
-void edf_event_policy(void** events_base, void *event, size_t count, size_t memb_size)
+void edf_event_policy(void* events_base, void *events_batch, size_t batch_size, 
+			size_t count, size_t memb_size)
 {
 	
 	// cast events
-	PlannerEvent **pevents_base = (PlannerEvent **)events_base;
-	PlannerEvent *pevent = (PlannerEvent *)event;
+	PlannerEvent *pevents_base = (PlannerEvent *)events_base;
+	PlannerEvent *pevent = (PlannerEvent *)events_batch;
 	
-	// set the execution time of the event to it's deadline
-	if (pevent->has_deadline)
+	for (int i = 0; i < batch_size; i++)
 	{
-		pevent->execution_time = pevent->deadline;
-	}
+		// set the execution time of the event to it's deadline
+		if (pevent->has_deadline)
+		{
+			pevent->execution_time = pevent->deadline;
+		}
+		// fit the event in the list
+		sorted_insert(pevents_base, pevent, count + i, memb_size);
 
-	// fit the event in the list
-	sorted_insert(*pevents_base, pevent, count, memb_size);
+		pevent++;
+
+	}
 }

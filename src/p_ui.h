@@ -26,6 +26,10 @@ typedef struct {
 
 	int cursor_cur_nday;
 
+	int cur_day;
+	int cur_month;
+	int cur_year;
+
 } MonthGridWin;
 
 typedef struct {
@@ -55,11 +59,15 @@ void populate_month_grid(MonthGridWin *month_win);
 void populate_day_task(DayTaskWin *day_win, int dday, int dmonth, int dyear,
 		PlannerEvent *day_events, int event_count);
 
+void set_cur_date(MonthGridWin *month_win, int day, int month, int year);
+
 void init_cursor(MonthGridWin *month_win, int row, int col);
 
 void update_cursor(MonthGridWin *month_win, int row, int col);
 
 void move_cursor(MonthGridWin *month_win, int ch);
+
+void jump_to_today(MonthGridWin *month_win);
 
 void destroy_p_ui(PlannerUI *p_ui);
 

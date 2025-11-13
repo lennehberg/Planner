@@ -4,17 +4,6 @@
 #define EPOCH_YEAR 1900
 
 
-int _compare_event_executions(const void *a, const void *b)
-{
-	time_t time_a = ((const PlannerEvent *)a)->execution_time;
-	time_t time_b = ((const PlannerEvent *)b)->execution_time;
-
-	if (time_a < time_b) return -1;
-	if (time_a > time_b) return 1;
-
-	return 0;
-} 
-
 
 
 /**

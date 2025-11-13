@@ -2,6 +2,18 @@
 #include <string.h>
 
 
+int _compare_event_executions(const void *a, const void *b)
+{
+	time_t time_a = ((const PlannerEvent *)a)->execution_time;
+	time_t time_b = ((const PlannerEvent *)b)->execution_time;
+
+	if (time_a < time_b) return -1;
+	if (time_a > time_b) return 1;
+
+	return 0;
+}
+
+
 /**
  * PlannerEvent init method
  * @param event - pointer to allocated PlannerEvent
@@ -13,8 +25,8 @@
  * @param cur_time
  */
 bool_t initPlannerEvent(PlannerEvent* event,
-			const ptitle_t title,
-			const pdesc_t desc,
+			ptitle_t title,
+			pdesc_t desc,
 			bool_t has_deadline,
 			Priorety event_prio
 			)
@@ -34,6 +46,7 @@ bool_t initPlannerEvent(PlannerEvent* event,
 	// TODO add a check before closing the event that the deadline was added
 	event->prio = event_prio;
 	event->has_deadline = has_deadline;
+	event->execution_time = 0;
 
 	return TRUE;
 }
@@ -70,7 +83,7 @@ bool_t setDeadlineEventPlanner(PlannerEvent* event, const pdate_t deadline,
 	// if the deadline time is not null, set it to
 	if (opt_deadline_time)
 	{
-		event->deadline_time = opt_deadline_time;
+		event->deadline = opt_deadline_time;
 	}
 
 	return TRUE;
